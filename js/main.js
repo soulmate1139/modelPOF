@@ -331,10 +331,6 @@ function startCountdown(seconds) {
 
 function resendOtp() {
   state.generatedOtp = String(Math.floor(100000 + Math.random() * 900000));
-  showAlert(
-    'otp-alert', 'success',
-    `📱 New OTP sent! Demo code: <strong style="letter-spacing:3px">${state.generatedOtp}</strong>`
-  );
   clearOtpBoxes();
   startCountdown(60);
 }
@@ -529,26 +525,31 @@ function submitVerification() {
 
 // ── Step 4 — Live status ──��───────────────────────��───────
 function updateStep4UI(status, data) {
-  $('state-pending').style.display     = status === 'pending'     ? 'block' : 'none';
-  $('state-resubmitted').style.display = status === 'resubmitted' ? 'block' : 'none';
-  $('state-approved').style.display    = status === 'approved'    ? 'block' : 'none';
-  $('state-rejected').style.display    = status === 'rejected'    ? 'block' : 'none';
+  $('state-pending').style.display  = status === 'pending'  ? 'block' : 'none';
+  $('state-approved').style.display = status === 'approved' ? 'block' : 'none';
+  $('state-rejected').style.display = status === 'rejected' ? 'block' : 'none';
 
-  // Show credentials card only after admin makes a decision
-  const decided = status === 'approved' || status === 'rejected';
+  // Always reset the re-verify button when the rejected state becomes visible
+  if (status === 'rejected') {
+    const btn = $('reverify-btn');
+    btn.disabled    = false;
+    btn.textContent = "I've Re-Verified";
+  }
+
+  // Show credentials card only on rejection (approved still awaits team review)
+  const decided = status === 'rejected';
   $('cred-card').style.display = decided ? 'block' : 'none';
 
   if (decided && data) {
-    const usernameChanged = data.username && data.username !== state.registeredUsername;
+    const currentUsername  = data.username || state.registeredUsername;
+    const usernameChanged  = currentUsername !== state.registeredUsername;
 
     if (usernameChanged) {
-      // Admin changed the username — show the new username + their original password
       $('cred-original').style.display = 'none';
       $('cred-updated').style.display  = 'block';
-      $('cred-username').textContent   = data.username;
+      $('cred-username').textContent   = currentUsername;
       $('cred-password').textContent   = state.registeredPassword;
     } else {
-      // Username unchanged — just remind them to use their original credentials
       $('cred-original').style.display = 'block';
       $('cred-updated').style.display  = 'none';
     }
@@ -559,9 +560,6 @@ function startStatusWatch() {
   if (!state.applicationDocId) return;
   if (state.unsubscribeWatch) state.unsubscribeWatch();
   state.unsubscribeWatch = watchApplication(state.applicationDocId, data => {
-    // Don't override the resubmitted screen with the spinner if status just went back to pending
-    const currentlyResubmitted = $('state-resubmitted').style.display === 'block';
-    if (data.status === 'pending' && currentlyResubmitted) return;
     updateStep4UI(data.status, data);
   });
 }
@@ -590,10 +588,8 @@ async function reVerify() {
   btn.textContent = 'Submitting…';
   try {
     await resetApplicationStatus(state.applicationDocId);
-    // Show the friendly re-submitted screen immediately — don't wait for the snapshot
-    $('resubmit-name').textContent  = $('firstName').value.trim();
-    $('resubmit-email').textContent = $('email').value.trim();
-    updateStep4UI('resubmitted', null);
+    // Go back to the loading spinner — "You're in the pond" only shows on approval
+    updateStep4UI('pending', null);
   } catch (err) {
     console.error('Re-verify failed:', err);
     btn.disabled    = false;

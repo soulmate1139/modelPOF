@@ -135,7 +135,7 @@ function openModal(id) {
     app.backUrl && app.backUrl !== 'n/a'
       ? `<a href="${app.backUrl}" target="_blank" class="doc-link">&#128196; Back of ID</a>` : '',
     app.selfieUrl
-      ? `<a href="${app.selfieUrl}" target="_blank" class="doc-link">&#129315; Selfie with ID</a>` : '',
+      ? `<a href="${app.selfieUrl}" target="_blank" class="doc-link">&#129315; Selfie</a>` : '',
   ].filter(Boolean).join('');
 
   $a('modal-content').innerHTML = `
