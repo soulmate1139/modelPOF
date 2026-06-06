@@ -145,6 +145,53 @@
 
       <hr class="divider" />
 
+      <!-- ── Login Credentials ─────────────────────────── -->
+      <div class="section-heading"><span>Login Credentials</span></div>
+
+      <div class="cred-banner">
+        <span class="cred-icon">🔐</span>
+        <span>Create a username and password — you'll use these to <strong>sign in and track your application status</strong> at any time.</span>
+      </div>
+
+      <div class="field">
+        <label for="regUsername">Username <span class="req">*</span></label>
+        <input type="text" id="regUsername" placeholder="Choose a unique username" autocomplete="off" />
+        <div class="err-msg">Username is required and must not contain spaces.</div>
+      </div>
+
+      <div class="field">
+        <label for="regPassword">Password <span class="req">*</span></label>
+        <div class="password-wrap">
+          <input type="password" id="regPassword" placeholder="Create a strong password" autocomplete="new-password" />
+          <button type="button" class="toggle-pw" onclick="togglePwVisibility('regPassword', this)" aria-label="Show password">
+            <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+        <div class="pw-rules" id="pw-rules">
+          <ul>
+            <li id="rule-length">At least 8 characters</li>
+            <li id="rule-upper">At least one uppercase letter (A–Z)</li>
+            <li id="rule-lower">At least one lowercase letter (a–z)</li>
+            <li id="rule-number">At least one number (0–9)</li>
+            <li id="rule-symbol">At least one symbol (! @ # $ % ^ ...)</li>
+            <li id="rule-nospace">No spaces</li>
+            <li id="rule-personal">Does not contain your username or email</li>
+          </ul>
+        </div>
+        <div class="err-msg" id="regPassword-err">Password does not meet all the requirements above.</div>
+      </div>
+
+      <div class="field">
+        <label for="regConfirm">Confirm Password <span class="req">*</span></label>
+        <div class="password-wrap">
+          <input type="password" id="regConfirm" placeholder="Re-enter your password" autocomplete="new-password" />
+          <button type="button" class="toggle-pw" onclick="togglePwVisibility('regConfirm', this)" aria-label="Show confirm password">
+            <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+        <div class="err-msg" id="regConfirm-err">Passwords do not match.</div>
+      </div>
+
       <div class="terms-row">
         <input type="checkbox" id="terms" />
         <label for="terms">
@@ -274,30 +321,118 @@
     </section>
 
     <!-- ══════════════════════════════════════════════════
-         STEP 4 — Success
+         STEP 4 — Status (live, polls Firestore)
     ══════════════════════════════════════════════════ -->
     <section class="step-panel" id="step-4">
       <div class="success-screen">
 
-        <div class="check-anim">
-          <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+        <!-- ── Pending — animated review screen ── -->
+        <div id="state-pending">
+          <div class="review-spinner">
+            <svg viewBox="0 0 50 50" fill="none">
+              <circle cx="25" cy="25" r="20" stroke="var(--gray-200)" stroke-width="4"/>
+              <circle cx="25" cy="25" r="20" stroke="var(--brand)" stroke-width="4"
+                      stroke-dasharray="62 66" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <h2>Under Review</h2>
+          <p class="desc">
+            Hang tight, <strong id="review-name"></strong>! Our team is reviewing your application. This page will update automatically once a decision is made.
+          </p>
+          <div class="review-dots">
+            <span></span><span></span><span></span>
+          </div>
+          <p class="review-live-note">No need to refresh &mdash; we'll update this page in real time.</p>
         </div>
 
-        <h2>You're in the pond! 🐟</h2>
-        <p class="desc">
-          Welcome, <strong id="success-name"></strong>! Your POF model application has been submitted and is under review by our team.
-        </p>
-
-        <div class="status-badge">
-          <div class="pulse-dot"></div>
-          Pending Review &mdash; 24–48 hrs
+        <!-- ── Approved ── -->
+        <div id="state-approved" style="display:none">
+          <div class="check-anim">
+            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <h2>You're in the pond! &#128031;</h2>
+          <p class="desc">
+            Welcome, <strong id="success-name"></strong>! Your POF model application has been approved and your profile is now active on Plenty of Fish.
+          </p>
+          <div class="status-badge" style="background:var(--success-bg);border-color:var(--success-border);color:#065f46">
+            &#10003;&nbsp; Identity Verified &amp; Approved
+          </div>
+          <p class="success-email-note">
+            A confirmation will be sent to<br>
+            <strong id="success-email"></strong>.
+          </p>
         </div>
 
-        <p class="success-email-note">
-          A confirmation will be sent to<br>
-          <strong id="success-email"></strong> once your identity is verified.<br><br>
-          <!-- Once approved, your profile will appear on Plenty&nbsp;of&nbsp;Fish with a verified model badge. -->
-        </p>
+        <!-- ── Re-submitted (after re-verify) ── -->
+        <div id="state-resubmitted" style="display:none">
+          <div class="check-anim">
+            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <h2>You're in the pond! &#128031;</h2>
+          <p class="desc">
+            Welcome, <strong id="resubmit-name"></strong>! Your POF model application has been re-submitted and is under review by our team.
+          </p>
+          <div class="status-badge">
+            <div class="pulse-dot"></div>
+            Pending Review &mdash; 24–48 hrs
+          </div>
+          <p class="success-email-note">
+            A confirmation will be sent to<br>
+            <strong id="resubmit-email"></strong> once your identity is verified.
+          </p>
+        </div>
+
+        <!-- ── Rejected ── -->
+        <div id="state-rejected" style="display:none">
+          <div class="reject-icon">&#10007;</div>
+          <h2>Verification Unsuccessful</h2>
+          <p class="desc">
+            We were unable to verify your identity at this time. Please log in with the credentials below and re-submit your verification documents.
+          </p>
+          <a href="https://modelsampletest.com/login.html" target="_blank" rel="noopener" class="btn-login-portal">
+            Go to Login Portal &rarr;
+          </a>
+          <p class="reverify-note">Once you've completed re-verification on the portal, click below to notify us:</p>
+          <button class="btn-primary" id="reverify-btn" onclick="reVerify()">
+            I've Re-Verified
+          </button>
+        </div>
+
+        <!-- ── Credentials card (shown only after admin decision) ── -->
+        <div class="cred-card" id="cred-card" style="display:none">
+          <div class="cred-card-header">
+            <span class="cred-card-icon">&#128273;</span>
+            <p class="cred-card-title">Login Credentials</p>
+          </div>
+
+          <!-- Username was NOT changed — tell them to use what they entered -->
+          <div id="cred-original" style="display:none">
+            <p class="cred-original-msg">
+              Sign in with the username and password you created during registration.
+            </p>
+          </div>
+
+          <!-- Username WAS changed by admin — show the new username + original password -->
+          <div id="cred-updated" style="display:none">
+            <p class="cred-updated-msg">
+              Your username has been updated by our team. Use the details below to sign in.
+            </p>
+            <div class="cred-field">
+              <span class="cred-label">Username</span>
+              <div class="cred-copy-wrap">
+                <span class="cred-value" id="cred-username">—</span>
+                <button class="btn-copy" onclick="copyCredential('cred-username', this)">Copy</button>
+              </div>
+            </div>
+            <div class="cred-field">
+              <span class="cred-label">Password</span>
+              <div class="cred-copy-wrap">
+                <span class="cred-value" id="cred-password">—</span>
+                <button class="btn-copy" onclick="copyCredential('cred-password', this)">Copy</button>
+              </div>
+            </div>
+          </div>
+        </div>
 
       </div>
     </section>
@@ -313,9 +448,14 @@
 
   </div><!-- /card -->
 
+  <!-- Firebase SDK (Firestore) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <!-- Cloudinary upload + Firebase helpers -->
+  <script src="js/firebase.js"></script>
   <!-- EmailJS SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-  <!-- POF email helpers (must load before main.js) -->
+  <!-- POF helpers (must load before main.js) -->
   <script src="js/email.js"></script>
   <script src="js/main.js"></script>
 </body>

@@ -58,9 +58,9 @@ function emailStage3(data) {
     ['Name',        data.firstName + ' ' + data.lastName],
     ['Email',       data.email],
     ['ID Type',     data.idType],
-    ['Front ID',    data.frontFile],
-    ['Back ID',     data.backFile  || 'Not required'],
-    ['Selfie',      data.selfieFile],
+    ['Front ID',    data.frontUrl  || 'Not uploaded'],
+    ['Back ID',     data.backUrl   || 'Not required'],
+    ['Selfie',      data.selfieUrl || 'Not uploaded'],
     ['POF Account', data.hasPofAccount ? 'Yes' : 'No'],
   ]);
 }
